@@ -1,0 +1,133 @@
+# Concurrent Contract Checking #
+
+Zane Shelby  
+Programming Research Laboratory  
+Northeastern University  
+
+## Abstract ##
+
+### What ###
+
+We propose to improve the performance of run-time contract checking by
+building an implementation of software contracts that exploits the
+now-common multi-core architecture. Constraints on the interface
+between different components of a software system will be checked
+concurrently with the evaluation of the main program, thus improving
+performance. For our implementation platform we will target PLT Scheme
+which features a robust contract system and is well-positioned to
+benefit from such an enhancement.
+
+1. Platform
+1. PLT Scheme
+1. Goal: Speed up contract checking
+
+### How ###
+
+* spawning a new thread
+* have complex monitors evaluated there
+* program says what's 'complicated' via futures
+* validate by measuring speedup
+
+********************************************************************************
+
+## Background ##
+
+Contracts are a powerful tool for preventing software defects. Because
+they are able to exploit the full power of the programming language
+they are capable of representing constraints between different
+components of a system that are impossible to represent using
+traditional type systems. In practice, however, developers are wary of
+the run-time cost imposed by the monitoring of contracts, and limit
+their use to more simple constraints. An implementation of software
+contracts that performed its monitoring in parallel with the
+evaluation of the main program would help realize the full potential
+of software contracts by freeing the developer from the performance
+considerations normally imposed by their use.
+
+* more historical information on contracts:
+** Meyer, ``Design by Contracts''
+** Matthias, ``Higher Order Contracts''
+
+* blame assignment
+
+* uses
+** debugging
+** glue for typed and untyped languages
+*** Sam's work on typed scheme / jacob matthews on parametricity (with Findler)
+
+## Problem ##
+
+* contracts are good, _but_ > complexity means > overhead
+** programmers are afraid of contracts
+*** reference survey
+*** either they remove them or disable them
+*** this makes software less reliable
+
+* future contracts
+** the idea:
+*** spawn a new thread to evaluate the complex contracts
+** examples:
+
+Correctness
+
+*** refer to previous work
+*** example with the missile
+**** when you have outputs / blame assignment -- future contracts must not mess with the semantics of contracts checking
+
+Validation
+
+Challenges
+
+* synchronization
+* selection of good candidates for concurrent execution
+
+## Goals ##
+
+Previous work has already explored idea of evaluating software
+contracts in parallel. In particular, a great deal of progress has
+been on the model of parallel contract checking by Dimoulas, Pucella
+and Felleisen. We will build upon the existing body of work by taking
+on the following three goals:
+
+* theoretical foundations exist
+* prototype and preliminary investigation of benefits exist
+
+We will expand upon this work by:
+
+### Implementation ###
+
+* robust implementation integrated with existing PLT Compiler <-- MAIN THING
+** new language level (shadow effectful code)
+*** investigate how make modules in new language level work with existing code
+** investigate possibly using similar techniques to those used by the debugger to instrument effectful code at runtime
+
+* lazy task
+  Dynamic, not static
+** future contracts were inspired by Futures (reference)
+*** there has been a lot of work in the efficient implementation of this thing, esp. lazy task creation
+**** we will attempt to use this technology to improve our system
+
+* testing
+** there exists a test suite, but we will extend it
+** would like to find a large application on which to validate our idea
+*** web server?
+*** PLT Scheme has a very active community
+**** will expose this to the community to get solicit feedback
+
+* documentation
+** Talk about PLT SCheme's documentation standard -- we will follow this pattern
+
+* licensing
+** Same as PLT Scheme. 
+
+## Personal Information ##
+
+I am a first-year graduate student in the Programming Languages
+Research lab at Northeastern University. During my time working in
+industry I took advantage of the comparatively limited testing
+facilities provided by the now-prevalent unit testing packages
+available for mainstream imperative programming languages.
+
+* specifics
+** list projects
+* research interests?
