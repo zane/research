@@ -1,51 +1,54 @@
 # Concurrent Contract Checking #
 
-Zane Shelby  
-Programming Research Laboratory  
-Northeastern University  
+Zane Shelby
+Programming Research Laboratory
+Northeastern University
 
 ## Abstract ##
 
-We propose to improve the performance of run-time contract checking by
-building an implementation of behavioral software contracts that
-exploits the now-common multi-core architecture. Constraints on the
-interface between different components of a software system will be
-checked concurrently with the evaluation of the main program, thus
-improving performance. For our implementation platform we will target
-PLT Scheme which features a robust contract system and is
-well-positioned to benefit from such an enhancement. Tests have shown
-that evaluating all contracts in parallel does not yield a performance
-improvement due to the overhead involved in communicating between the
-two threads. Instead, the program the programmer will use a special
-annotation, `future`, to indicate that a particular contract is of
-sufficient complexity to warrant being evaluated in parallel. At
-run-time when a function call crosses a contract boundary all the
-contracts on that function annotated with `future` will be evaluated
-in this second thread. We will validate our change by measuring the
-performance speedup an existing application that takes advantage of
-software contracts.
+We propose a re-implementation of PLT Scheme's contract checking
+system that exploits the now-common multi-core architecture.
+Constraints on the interface between different components of a
+software system will be checked concurrently with the evaluation of
+the main program, thus improving performance. Experimental results
+have shown that evaluating all contracts in parallel does not yield a
+performance improvement due to communication cost. In our system, the
+programmer will use a special annotation, `future`, to indicate that a
+contract check is of sufficient complexity and thus a good candidate
+for parallelization. We plan to validate the usefulness of our system
+through a series of experiments on a benchmark suite and real-world
+applications that make heavy use of contracts.
 
 ## Background ##
 
 Programmers frequently insert assertions into their programs to ensure
 that at various points during the execution, the program state
-satisﬁes some important logical property. For multi-component systems,
-assertions have become a popular tool to express constraints on the
-interface between two components that a static type system cannot
-express. When used in this context assertions are called behavioral
-software contracts or just contracts. While Parnas (1972) introduced
-contracts as early as 1972, they only became popular with Eiffel
-(Meyer 1988, 1992). Later, contracts were introduced on many other
-platforms (Duncan and Hoelzle 1998; Gomes et al. 1996; Holt et al.
-1987; Karaorman et al. 1999; Kölling and Rosenberg 1997; Kramer
+satisfies some important logical property. For multi-component
+systems, assertions have become a popular tool to express constraints
+on the interface between two components that a static type system
+cannot express. When used in this context assertions are called
+behavioral software contracts or just contracts. While Parnas (1972)
+introduced contracts as early as 1972, they only became popular with
+Eiffel (Meyer 1988, 1992). Later, contracts were introduced on many
+other platforms (Duncan and Hoelzle 1998; Gomes et al. 1996; Holt et
+al. 1987; Karaorman et al. 1999; Kölling and Rosenberg 1997; Kramer
 1998; Luckham and Henke 1985; Ploesch and Pichler 1999; Rosenblum
 1995). Most recently, Findler and Felleisen (2002) have introduced
 contracts into the world of higher order functional programming
-languages. The most obvious application of behavioral software
-contracts is for debugging, but other applications exist. In the
-implementation of Typed Scheme, Tobin-Hochstadt builds upon the work
-of Guha, Matthews, Findler and Krishnamurthi to use contracts to
-enforce type safety between typed and untyped Scheme modules.
+languages and also proposed a blame assignment mechanism when thing go
+wrong. Contracts have been proved to be useful in a variety of ways.
+They make testing and debugging more systematic as they reveal corner
+cases and blame the party that does not respect the contracted
+specification. They suggest a modular way of designing programs. The
+function body keeps the operational part and the contract deals with
+the correctness/reasoning portion of the design. Also code with
+contracts puts pressure to code with no contracts through the blame
+mechanism, forcing programmers to design more reliable applications.
+Finally contracts have been used as glue between between different
+languages, typed and untyped. The implementation of Typed Scheme
+(Tobin-Hochstadt and Felleisen 2008) is a recent example of how
+contracts can play an important in the migration process from an
+untyped to a typed world.
 
 ## Problem ##
 
@@ -72,83 +75,106 @@ run-time cost of contract checking leads to less reliable software.
 
 Multi-core architectures suggest an obvious way to address this
 problem, namely by monitoring contracts in parallel with program
-execution. Since software contracts are usually functional
-computations - even in imperative languages - running them in parallel
-should be easy and should save most of the cost of evaluating them.
-Because communication between threads is not free, we would expect
-that evaluating every single contract in parallel is not cost
-effective, and indeed simple experiments validate this intuition,
-showing that evaluating every contract in parallel leads to a slow
-down in execution time. This impact is worsened by the presence of
-effects in the main program and in contracts, which require
-synchronization between the main program thread and the contract
-monitoring thread. The question, then, is how to choose the contracts
-that benefit from parallel evaluation. To help answer this question, we
-introduce the notion of future contracts inspired by Halstead's (1984)
-future construct. Following Halstead's work, the annotation `future`
-on a contract indicates that a contract should be checked in parallel
-with the rest of the program; unannotated contracts are executed
-in-line. While Halstead's future expressions immediately produce a
-future value, a future contract produces nothing. Instead, the main
-thread sends such a contract to the monitoring thread and proceeds
-until it must perform an observable operation (e.g., a side-effect or
-an I/O operation). At that point, the main threads waits to ensure
-that the contract succeeds. If so, the computation proceeds; otherwise
-the program terminates with a contract exception.
+execution using an additional thread. Since software contracts are
+usually functional computations - even in imperative languages -
+running them in parallel should be easy and should save most of the
+cost of evaluating them. Because communication between threads is not
+free, we would expect that evaluating every single contract in
+parallel is not cost effective, and indeed simple experiments validate
+this intuition, showing that evaluating every contract in parallel
+leads to a slow down in exe- cution time. This impact is worsened by
+the presence of effects in the main program and in contracts, which
+require synchronization between the main program thread and the
+contract monitoring thread. The question, then, is how to choose the
+contracts that benefit from parallel evaluation. To help answer this
+que- stion, we introduce the notion of future contracts inspired by
+Halstead's (1984) future construct. Following Halstead's work, the
+annotation `future` on a contract indicates that a contract should be
+checked in parallel with the rest of the program; unannotated
+contracts are executed in-line. While Halstead's `future` expressions
+immediately produce a future value, a future contract produces
+nothing. Instead, the main thread sends such a contract to the
+monitoring thread and proceeds until it must perform an observable
+operation (e.g., a side-effect or an I/O operation). At that point,
+the main threads waits to ensure that the contract succeeds. If so,
+the computation proceeds; otherwise the program terminates with a
+contract exception.
 
-It is critical that the parallel evaluation of future contracts not
-change the semantics of the original program. Consider the example of
-a function that fires a missile guarded by a contract that checks that
-the target of the missile is not friendly. When contracts are checked
-sequentially, the domain contract of attack ensures that a missile is
-ﬁred only if the target is hostile. However, a parallel and
-unsynchronized check of the contact may lead to missile launching
-without first confirming that the target is an enemy. This indicates
-that observable effects should be delayed until all parallel contract
-checking has completed. Our implementation will accomplish this this
-by treating PLT Scheme primitives that cause side effects as
-synchronization points between the main thread and the thread
-concurrently evaluating the future contracts.
+It is critical that the parallel evaluation of future contracts does
+not change the semantics of the original program. Consider the example
+of an attack function that fires a missile guarded. The attack
+function comes with a contract that checks that the target of the
+missile is not friendly. When contracts are checked sequentially, the
+contract of attack ensures that a missile is ﬁred only if the target
+is hostile. However, a parallel and unsynchronized check of the
+contact may lead to missile launching without first confirming that
+the target is an enemy. This indicates that observable effects should
+be delayed until all parallel contract checking has completed. Our
+implementation will accomplish this this by treating termination and
+PLT Scheme primitives that cause side effects as synchronization
+points between the main thread and the monitoring thread.
+
+Future contracts aim to improve the efficiency of programs that use
+complex contracts. A careful process of experimentation is needed to
+collect the empirical results that validate our approach and can help
+us to draw conclusions on the most efficient use of the `future`
+annotation. We will accomplish this goal by designing an appropriate
+benchmarks suite. If this succeeds we will search for real-world
+applications that can benefit from our work.
 
 ## Implementation ##
 
-The theoretical foundations for this work have already been explored,
-and a prototype and preliminary investigations of the benefits of this
-kind of approach exist. We will expand upon this work by providing a
-robust implementation integrated with the existing PLT Scheme
-compiler. 
+The theoretical foundations for this work have already been set and
+proved correct, and a prototype and a small suite of benchmarks have
+been implemented (work under review). The experimental results are
+encouraging and show significant speedup in programs with complex
+contracts and also helped to sketch guidelines for choosing good
+potential future contracts. We plan to expand upon this work by
+providing a robust implementation integrated with the existing PLT
+Scheme compiler, a richer benchmark suite and more elaborate empirical
+results.
 
-DrScheme allows for the construction of `language levels` which have
-their own independent syntactic and semantic rules. Our initial
-implementation will introduce concurrent contract checking as a new
-language level. In this language level we will shadow function calls
-that would produce side effects with instrumented versions
-facilitating synchronization with the thread that is evaluating the
-behavioral software contracts. Once this implementation is complete we
-will investigate the feasibility of migrating away from our
-implementation built on top of language levels by taking advantage of
-techniques similar to those used by debuggers to provide the necessary
-instrumentation at run-time rather than compile-time.
+PLT Scheme allows for the construction of `language levels` which
+extend or restrict PLT Scheme with their own independent syntactic and
+semantic rules. Our initial implementation will introduce concurrent
+contract checking as a part of new language level. Our design will
+follow the specifications of the theoretical model. The execution of a
+program of this language level will start with the initialization of
+the monitoring thread and the communication mechanism. We will shadow
+function calls that would produce side effects with instrumented
+versions facilitating synchronization with the thread that is
+evaluating the behavioral software contracts. Before a program
+terminates it will synchronize for the last time with the monitoring
+thread to confirm that all contracts have been checked.
 
-Future contracts were inspired by the work of Halstead's work on the
-`future` construct (1984). Research in areas such as lazy task
-creation has explored how to implement constructs similar to `future`
-efficiency. We hope to take advantage of that work to improve the
-efficiency of our own implementation.
+After this step, we will investigate the feasibility of migrating to
+an implementation that takes advantage of techniques similar to those
+used by debuggers to provide the necessary instrumentation at run-time
+rather than compile-time.
+
+Finally, we plan to investigate how techniques for the efficient
+implementation of Halstead's future like lazy task creation (Feeley
+1993, Kranz et al. 1989) can be applied in our setting. We hope to
+take advantage of that work to improve the efficiency of our own
+implementation.
 
 ### Testing ###
 
-There exists contains a rich test suite for behavioral software
-contracts in the PLT Scheme code base. We will take advantage of this
-test suite to test the validity of our implementation as well extend
-it to cover additional test cases introduced by our monitoring
-approach. There are many large programs that take advantage of rich
-software contracts. A measurable performance speed-up on such an
-application would be an excellent proof of concept, and would validate
-our approach. Additionally, PLT Scheme has a very active user
-community. We hope to provide an early implementation of our system to
-the community with the hopes of soliciting additional bug reports and
-feedback.
+The existing prototype of the system comes with a small benchmark
+suite. We plan to enrich it with more applications of various sizes
+and complexity and with a variety of simple and complex contracts.
+Then we will experiment with the use of future contracts and measure
+its effect on the efficiency of programs. Based on our empirical
+results, we will develop guidelines on how future contracts should be
+used and then ratify our conjectures with more experiments.
+Additionally, PLT Scheme has a very active user community. We hope to
+provide an early implementation of our system to the community with
+the hopes of soliciting additional bug reports and feedback on the
+usefulness of the new feature. We also hope to find through the PLT
+Scheme users community a real-world application that employs heavy
+contracts. A measurable performance speed-up on such an application
+would be an excellent proof of concept, and would validate our
+approach.
 
 ### Documentation ###
 
@@ -167,4 +193,4 @@ released under the LGPL license.
 I am a first-year graduate student in the Programming Languages
 Research lab at Northeastern University. My research interests include
 contracts, static analysis, partial evaluation and functional
-programming. 
+programming.
