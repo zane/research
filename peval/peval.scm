@@ -4,27 +4,34 @@
 ;;; 4.1.1-4.1.4) of Structure and Interpretation of Computer Programs.
 (define apply-in-underlying-scheme apply)
 
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
+(define (myeval exp env)
+  (cond ((self-evaluating? exp)
+         exp)
+        ((variable? exp)
+         (lookup-variable-value exp env))
+        ((quoted? exp)
+         (text-of-quotation exp))
+        ((assignment? exp)
+         (eval-assignment exp env))
+        ((definition? exp)
+         (eval-definition exp env))
+        ((if? exp)
+         (eval-if exp env))
         ((lambda? exp)
          (make-procedure (lambda-parameters exp)
                          (lambda-body exp)
                          env))
         ((begin? exp) 
          (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
+        ((cond? exp)
+         (myeval (cond->if exp) env))
         ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
+         (myapply (myeval (operator exp) env)
+                  (list-of-values (operands exp) env)))
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
-(define (apply procedure arguments)
+(define (myapply procedure arguments)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure procedure arguments))
         ((compound-procedure? procedure)
@@ -42,28 +49,28 @@
 (define (list-of-values exps env)
   (if (no-operands? exps)
       '()
-      (cons (eval (first-operand exps) env)
+      (cons (myeval (first-operand exps) env)
             (list-of-values (rest-operands exps) env))))
 
 (define (eval-if exp env)
-  (if (true? (eval (if-predicate exp) env))
-      (eval (if-consequent exp) env)
-      (eval (if-alternative exp) env)))
+  (if (true? (myeval (if-predicate exp) env))
+      (myeval (if-consequent exp) env)
+      (myeval (if-alternative exp) env)))
 
 (define (eval-sequence exps env)
-  (cond ((last-exp? exps) (eval (first-exp exps) env))
-        (else (eval (first-exp exps) env)
+  (cond ((last-exp? exps) (myeval (first-exp exps) env))
+        (else (myeval (first-exp exps) env)
               (eval-sequence (rest-exps exps) env))))
 
 (define (eval-assignment exp env)
   (set-variable-value! (assignment-variable exp)
-                       (eval (assignment-value exp) env)
+                       (myeval (assignment-value exp) env)
                        env)
   'ok)
 
 (define (eval-definition exp env)
   (define-variable! (definition-variable exp)
-    (eval (definition-value exp) env)
+    (myeval (definition-value exp) env)
     env)
   'ok)
 
@@ -183,14 +190,11 @@
                      (sequence->exp (cond-actions first))
                      (expand-clauses rest))))))
 
-;;;SECTION 4.1.3
-
 (define (true? x)
   (not (eq? x #f)))
 
 (define (false? x)
   (eq? x #f))
-
 
 (define (make-procedure parameters body env)
   (list 'procedure parameters body env))
@@ -289,6 +293,10 @@
         (list 'cdr cdr)
         (list 'cons cons)
         (list 'null? null?)
+        (list '+ +)
+        (list '- -)
+        (list '* *)
+        (list '/ /)
         ;;      more primitives
         ))
 
@@ -300,13 +308,9 @@
   (map (lambda (proc) (list 'primitive (cadr proc)))
        primitive-procedures))
 
-;;[moved to start of file] (define apply-in-underlying-scheme apply)
-
 (define (apply-primitive-procedure proc args)
   (apply-in-underlying-scheme
    (primitive-implementation proc) args))
-
-
 
 (define input-prompt ";;; M-Eval input:")
 (define output-prompt ";;; M-Eval value:")
@@ -314,7 +318,7 @@
 (define (driver-loop)
   (prompt-for-input input-prompt)
   (let ((input (read)))
-    (let ((output (eval input the-global-environment)))
+    (let ((output (myeval input the-global-environment)))
       (announce-output output-prompt)
       (user-print output)))
   (driver-loop))
