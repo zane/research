@@ -8,26 +8,19 @@
   (define-syntax (future-module-begin stx)
     (syntax-case stx ()
       ((_ form ...)
-       (begin
-         (display (let-values ([(require-forms non-require-forms)
-                                (partition (lambda (stx)
-                                             (and (stx-pair? stx)
-                                                  (equal? (syntax-object->datum (stx-car stx))
-                                                          'require)))
-                                           (syntax->list (syntax (form ...))))])
-                    (list require-forms non-require-forms)))
-         (syntax (#%module-begin
-                  (printf "start~n")
-                  form ...
-                  (printf "end~n"))))))))
-
-#|
-          (let ([result (begin-with-definitions
-                          form ...)])
-            (display "start")
-            result
-            (display "end")))))))
-|#
+       (let-values ([(require-forms non-require-forms)
+                     (partition (lambda (stx)
+                                  (and (stx-pair? stx)
+                                       (equal? (syntax-object->datum (stx-car stx))
+                                               'require)))
+                                (syntax->list (syntax (form ...))))])
+         (quasisyntax (#%module-begin
+                       #,@require-forms
+                       (printf "start~n")
+                       (let ([result (begin-with-definitions
+                         #,@non-require-forms)])
+                         (printf "result is: ~a~n" result))
+                       (printf "end~n"))))))))
 
 
 
