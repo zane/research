@@ -1,3 +1,6 @@
+;;;
+;;; Test module
+;;; 
 (module test "../ccc/future.ss"
   (require "../ccc/lib.ss")
   

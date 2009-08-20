@@ -1,0 +1,63 @@
+2) Boolean Expression Evaluator
+
+ --module ast
+ 
+  provide all-defined-out 
+
+   A exp is one of
+   - Symbol
+   - (make-nt expr)
+   - (make-nd expr expr)
+   - (make-apply Symbol expr)
+
+   A def is
+   (make-def symbol? [listof symbol?] expr?)
+
+
+   valid-expr?: [listof Symbol] [listof def] -> expr -> boolean
+   checks if all symbols are bound if the symols list and defs
+   list and if all applications involve the right number of args
+
+   valid-defs?: ->d
+        ([defs   (listof (lambda (f) 
+                            ((valid-expr? (def-args f) defs)
+                             (def-body f))))])
+        ()
+        [boolean?]  
+
+ --module substitution
+ 
+  require ast
+
+  provide substitution
+
+   substitution: ->d
+        ([expr   (valid-expr? env-vars env-values defs)]
+         [env-vars   (lambda (e)
+                        (and 
+                          (= lemgth e env-values)
+                          (andmap symbol? e)))]
+         [env-values (listof boolean?)]
+         [defs   (listof (lambda (f) 
+                            ((valid-expr? (def-args f) defs)
+                             (def-body f))))])
+        ()
+        [(valid-expr? null null defs)]
+
+
+  --module evaluator
+
+    require ast
+
+    require substitution
+   
+    provide evaluator
+     
+    evaluator: ->d
+        ([expr   (valid-expr? null null defs)]
+         [env-values (listof boolean?)]
+         [defs   (listof (lambda (f) 
+                            ((valid-expr? (def-args f) defs)
+                             (def-body f))))])
+        ()
+        [boolean?] 

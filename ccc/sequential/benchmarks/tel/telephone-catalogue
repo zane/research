@@ -1,0 +1,129 @@
+1) telephone catalogue
+
+--module telephone-catalogue
+
+  provides create-telephone-entry
+           telephone-entry?
+           telephone-catalogue?
+           telephone-entry-to-string
+
+  A name-string is a string that consists of characters a-z/A-Z
+
+  A telephone-number is
+  (make-telephone-number description tel-number)
+  where description is a string
+        tel-number is a Number with 10 digits
+  
+  An email is
+  (make-email description email-address)
+  where description is a string
+        email-address is a string of the form x@y.z where 
+        x,y,z are name-string
+
+  A telephone-catalogue is an assoc [listof telphone-entry?] 
+  sorted in ascending order by the last name and first name of
+  the telephone entries
+
+  A telephone entry is
+  (make-telephone-entry last-name first-mame telephone-numbers emails)
+  where last-name, first-name are name-string
+        telephone-numbers is a [listof telephone-number?]
+        emails is a a [listof email?] 
+
+  create-telephone-entry: 
+   name-string? 
+   name-string? 
+   [listof (String? x tel-number?)] 
+   [listof (String? x email-address?)] 
+   -> telephone-entry?
+
+   telephone-entry-to-string : telephone-entry? -> String
+
+
+--module telephone-catalogue-lib
+
+  requires telephone-catalogue
+
+  provides init
+           add
+           remove
+           search
+
+ init: [listof telephone-entry?] -> telephone-catalogue?
+
+ add: telephone-catalogue? telephone-entry? -> telephone-catalogue?
+  
+ remove: telephone-catalogue? telephone-entry? -> telephone-catalogue?
+
+ search: telephone-catalogue? telephone-entry? -> String 
+
+  (add  (list (create-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (pair "Boston" "8572337299"))
+                  (list (pair "neu"  "chrdimo@ccs.neu.edu")
+                        (pair "gmail" "chrdimo@gmail.com")))))
+          (create-telephone-entry 
+               "Dimoulas" "Christos" 
+               (list (pair "Athens" "2108067014"))
+               null)
+           
+                     
+       ----> (list (make-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (make-telephone-number "Boston" "8572337299") 
+                        (make-telephone-number "Athens" "2108067014"))
+                  (list (make-email "neu"  "chrdimo@ccs.neu.edu")
+                        (make-email "gmail" chrdimo@gmail.com")) 
+
+
+
+ (remove  (list (create-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (pair "Boston" "8572337299") 
+                        (pair "Athens" "2108067014"))
+                  (list (pair "neu"  "chrdimo@ccs.neu.edu")
+                        (pair "gmail" "chrdimo@gmail.com")))))
+          (create-telephone-entry 
+               "Dimoulas" "Christos" 
+               null
+               null)           
+                     
+       ---->  null
+                     
+  (remove  (list (create-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (pair "Boston" "8572337299") 
+                        (pair "Athens" "2108067014"))
+                  (list (pair "neu"  "chrdimo@ccs.neu.edu")
+                        (pair "gmail" "chrdimo@gmail.com")))))
+          (create-telephone-entry 
+               "Dimoulas" "Christos" 
+               (list (pair "Boston" "8572337299") 
+                     (pair "Athens" "2108067014"))
+               null)           
+                     
+       ----> (list (make-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  null
+                  (list (make-telephone-number "neu"  "chrdimo@ccs.neu.edu")
+                        (make-email "gmail" "chrdimo@gmail.com")))) 
+
+  (remove  (list (create-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (pair "Boston" "8572337299") 
+                        (pair "Athens" "2108067014"))
+                  (list (pair "neu"  "chrdimo@ccs.neu.edu")
+                        (pair "gmail" "chrdimo@gmail.com")))))
+          (create-telephone-entry 
+               "Dimoulas" "Christos" 
+               (list (pair "Boston" "8572337299") 
+                     (pair "Athens" "2108067014"))
+                (list (pair "neu"  "chrdimo@ccs.neu.edu")))
+           
+                     
+       ----> (list (make-telephone-entry 
+                  "Dimoulas" "Christos" 
+                  (list (make-telephone "Boston" "8572337299") 
+                        (make-telephone "Athens" "2108067014"))
+                  (list (make-email "neu"  "chrdimo@ccs.neu.edu")) 
+

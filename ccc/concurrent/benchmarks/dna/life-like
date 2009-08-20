@@ -1,0 +1,79 @@
+3) life like simulation game
+
+
+  --module world
+
+  provide  init-world
+           viruses
+           valid-cell?
+           mutated-cell?
+           dead-cell?
+           gene?
+           same-dna?
+           cell
+           virus
+
+  base is one of 'A 'T 'C'G
+
+  complement? : base? base? -> boolean?
+
+  dna-chain is a [listof base?]
+
+  same-dna?: dna-chain? dna-chain? -> boolean?
+
+  valid-species: [listof dna-chain?]
+
+  cell is a (make-cell dna-chain?  dna-chain?)
+
+  valid-cell?: cell? -->  boolean?
+  (lambda (c) (and
+     (ormap (lambda (x) (same-dna? cell-l)) valid-species) 
+     (andmap complement? (cell-l cell) (cell-r cell))))
+
+  mutated-cell?: cell? --> boolean?   
+    (lambda (c) (and
+     (not (ormap (lambda (x) (same-dna? cell-l)) valid-species)) 
+     (andmap complement? (cell-l cell) (cell-r cell))))
+
+
+  dead-cell : cell?
+    (make-cell null null)
+
+  gene? [listof base?] dna-chain? -> boolean?
+  returns #t if the bases-sequence is a subsequnce of the dna chain
+
+
+  init-world: [listof valid-cell?]
+
+  a virus is (make-virus target-dna target-gene)
+      where target-dna and target-gene are dna-chain?
+
+  viruses is a [listof virus?]
+
+  -- module life-circle
+
+  require world
+
+  reproduce: valid-cell? -> (valid-cell? x valid-cell?)
+
+  die: (mutated-cell?) -> dead-cell?
+
+  mutate: ->d 
+    ([cell valid-cell?]
+     [virus (lambda (v) (and
+                          (same-dna? (virus-target-dna v) (cell-l cell))
+                          (gene? (virus-target-gene v) cell-l)))])
+    ()
+    [mutated-cell?]
+
+  clean-world: [listof cell?] -> [listof cell?]
+
+
+  
+
+
+   
+
+  
+
+
