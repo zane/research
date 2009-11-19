@@ -1,16 +1,38 @@
 (module midtgaard2008 scheme
   (require redex)
   
-  (define-language caek-lang
+  (define-language caek-lang-core
     ;; Programs
-    (P S)
+    [P S]
     
     ;; Trivial Expressions
-    (T C
-       X
-       (λ X S))
+    [T X 
+       V]
     
     ;; Serious Expressions
-    (S (let (X S)
+    [S (let (X S)
          S)
-       (S S))))
+       (S S)]
+    
+    ;; Values
+    [V C
+       (λ X S)]
+    
+    [C number])
+  
+  (define-extended-language caek-lang
+    caek-lang-core
+    
+    ;; Machine State
+    [M (S E K)]
+    
+    ;; Control Stack
+    [K (X S E)]
+    
+    ;;
+    [E (B ...)]
+    
+    ;; Binding
+    [B (X C)]
+  
+  )
