@@ -2,20 +2,16 @@
   (require redex "redex-util.ss")
   
   (define-language caek-lang-core
-    ;; Programs
     [P S]
-    
-    ;; Trivial Expressions
+
     [T X 
        V]
     
-    ;; Serious Expressions
     [S T
        (let (X S)
          S)
        (S S)]
     
-    ;; Values
     [V C
        (λ X S)]
     
@@ -37,15 +33,28 @@
   (define-extended-language caek-lang
     caek-lang-core
     
-    ;; Val - values
+    [M (make-machine S E K)]
+    
     [W C
-       ((λ X S) E)]
+       (make-closure (λ X S) E)]
     
-    ;; Env - environments
-    [E ((X W) ...)]
+    [E (make-env (make-binding X W) ...)]
     
-    ;; - stacks
     [K stop
-       ((X S E) ... k)])
+       (make-stack (X S E) ...)])
   
+  (test-match caek-lang E (term (make-env)))
+  (test-match caek-lang E (term (make-env (make-binding x 3))))
+  (test-match caek-lang E (term (make-env (make-binding x 3) 
+                                          (make-binding y 4))))
+  (test-match caek-lang K (term stop))
+  (test-match caek-lang E 
+              (term (make-env (make-binding x 3)
+                              (make-binding y 4)
+                              (make-binding z 
+                                            (make-closure (λ x x) 
+                                                          (make-env))))))
+  (test-match caek-lang K (term (make-stack)))
+  (test-match caek-lang K (term (make-stack (x x (make-env)))))
+
   )
