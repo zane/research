@@ -101,7 +101,15 @@
           (make-machine S_1 
                         (make-env (make-binding X (μ T E))
                                   B ...)
-                        (make-stack F ... stop)))))
+                        (make-stack F ... stop)))
+     (--> (make-machine (let (X T)
+                          S)
+                        (make-env B ...)
+                        K)
+          (make-machine S 
+                        (make-env (make-binding X (μ T (make-env B ...)))
+                                  B ...)
+                        K))))
   
   (test-->> caek-abstract
             (term (make-machine 7 
@@ -111,5 +119,13 @@
             (term (make-machine x
                                 (make-env (make-binding x 7))
                                 (make-stack stop))))
+  (test--> caek-abstract
+           (term (make-machine (let (x 3)
+                                 x)
+                               (make-env)
+                               (make-stack stop)))
+           (term (make-machine x
+                               (make-env (make-binding x 3))
+                               (make-stack stop))))
   
   )
