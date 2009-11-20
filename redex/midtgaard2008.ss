@@ -179,7 +179,10 @@
     
     [ESet (make-set E ...)]
     
-    [WSet (make-set W ...)])
+    [WSet (make-set W ...)]
+    
+    [Any P
+         M])
   
   (test-match caek-cs A
               (term (make-set (make-machine 7 
@@ -209,12 +212,85 @@
   (test-equal (term (μ_c (λ x x) (make-set (make-env))))
               (term (make-set (make-closure (λ x x) (make-env)))))
   
-  ;; Must sort set of machines
+  #;
+  (define-metafunction caek-cs
+    [(∪ (make-set Any_0 ...)
+        (make-set Any_1 ...))
+     ,(sort (remove-duplicates (term (make-set Any_0 Any_1)))
+            (sexp<?))])
+  
+  ;; A SEXP is one of
+  ;; - number?
+  ;; - symbol?
+  ;; - [listof SEXP]
+  
+  (define (symbol<? s1 s2)
+    (string<? (symbol->string s1)
+              (symbol->string s2)))
+  
+  (define (sexp<? s1 s2)
+    (cond [(and (number? s1)
+                (number? s2))
+           (< s1 s2)]
+          [(and (number? s1)
+                (symbol? s2))
+           #t]
+          [(and (number? s1)
+                (list? s2))
+           #t]
+          [(and (symbol? s1)
+                (symbol? s2))
+           (symbol<? s1 s2)]
+          [(and (symbol? s1)
+                (number? s2))
+           #f]
+          [(and (symbol? s1)
+                (list? s2))
+           #t]
+          [(and (list? s1)
+                (number? s2))
+           #f]
+          [(and (list? s1)
+                (symbol? s2))
+           #f]
+          [(and (empty? s1)
+                (empty? s2))
+           #f]
+          [(and (empty? s1)
+                (cons? s2))
+           #f]
+          [(and (cons? s1)
+                (empty? s2))
+           #t]
+          [else (let ([i (sexp<? (first s1)
+                                 (first s2))])
+                  (if (not (equal? (first s1)
+                                   (first s2)))
+                      i
+                      (sexp<? (rest s1)
+                              (rest s2))))]))
+  
+  (test-equal (sexp<? 0 0) #f)
+  (test-equal (sexp<? 0 1) #t)
+  (test-equal (sexp<? 1 0) #f)
+  (test-equal (sexp<? 0 'x) #t)
+  (test-equal (sexp<? 'x 0) #f)
+  (test-equal (sexp<? 0 empty) #t)
+  (test-equal (sexp<? empty 0) #f)
+  (test-equal (sexp<? 'x empty) #t)
+  (test-equal (sexp<? empty 'x) #f)
+  (test-equal (sexp<? empty empty) #f)
+  (test-equal (sexp<? '(0) '(1)) #t)
+  (test-equal (sexp<? '(0) '(0)) #f)
+  (test-equal (sexp<? '(0 0) '(0 1)) #t)
+  (test-equal (sexp<? '(1 0) '(0 1)) #f)
+  (test-equal (sexp<? '(0 (0 0)) '(0 (0 1))) #t)
+  
   #;
   (define caek-collecting
     (reduction-relation
      caek-cs
      (--> (make-set A ...
-                    (make-machine ))))
+                    (make-machine S E K)))))
   
   )
