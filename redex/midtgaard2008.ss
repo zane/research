@@ -175,27 +175,46 @@
   (define-extended-language caek-cs
     caek-lang
     
-    [ESet (make-eset E ...)]
-    [WSet (make-wset W ...)])
+    [A (make-set M ...)]
+    
+    [ESet (make-set E ...)]
+    
+    [WSet (make-set W ...)])
   
+  (test-match caek-cs A
+              (term (make-set (make-machine 7 
+                                            (make-env)
+                                            (make-stack stop)))))
   
   (define-metafunction caek-cs
-    [(μ_c C ESet) (make-wset C)]
-    [(μ_c X ESet) (make-wset ,@(filter (λ (W) W)
+    [(μ_c C ESet) (make-set C)]
+    [(μ_c X ESet) (make-set ,@(filter (λ (W) W)
                                       (map (λ (E)
                                              (apply-env E
                                                         (term X)))
                                            (rest (term ESet)))))]
-    #;[(μ_c (λ X S) E) (make-closure (λ X S) E)])
+    [(μ_c (λ X S) ESet) (make-set ,@(map (λ (E)
+                                           (term (make-closure (λ X S) ,E)))
+                                         (rest (term ESet))))])
   
-  (test-equal (term (μ_c 1 (make-eset (make-env))))
-              (term (make-wset 1)))
-  (test-equal (term (μ_c 3 (make-eset (make-env (make-binding x 1)
-                                                (make-binding y 2)))))
-              (term (make-wset 3)))
-  (test-equal (term (μ_c x (make-eset (make-env (make-binding x 1))
-                          (make-env (make-binding x 2))
-                          (make-env (make-binding x 3)))))
-              (term (make-wset 
+  (test-equal (term (μ_c 1 (make-set (make-env))))
+              (term (make-set 1)))
+  (test-equal (term (μ_c 3 (make-set (make-env (make-binding x 1)
+                                               (make-binding y 2)))))
+              (term (make-set 3)))
+  (test-equal (term (μ_c x (make-set (make-env (make-binding x 1))
+                                     (make-env (make-binding x 2))
+                                     (make-env (make-binding x 3)))))
+              (term (make-set 1 2 3)))
+  (test-equal (term (μ_c (λ x x) (make-set (make-env))))
+              (term (make-set (make-closure (λ x x) (make-env)))))
+  
+  ;; Must sort set of machines
+  #;
+  (define caek-collecting
+    (reduction-relation
+     caek-cs
+     (--> (make-set A ...
+                    (make-machine ))))
   
   )
