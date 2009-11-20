@@ -62,7 +62,7 @@
   (test-match caek-lang K (term (make-stack (make-frame x x (make-env)))))
   
   (define-metafunction caek-lang
-    [(μ C E) E]
+    [(μ C E) C]
     [(μ X E) ,(apply-env (term E) (term X))]
     [(μ (λ X S) E) (make-closure (λ X S) E)])
   
@@ -84,22 +84,27 @@
               2)
   
   (test-equal (term (μ 1 (make-env)))
-              (term (make-env)))
+              (term 1))
   (test-equal (term (μ x (make-env (make-binding x 2))))
               (term 2))
   (test-equal (term (μ (λ x x) (make-env)))
               (term (make-closure (λ x x) (make-env))))
   
-  #;
   (define caek-abstract
     (reduction-relation
      caek-lang
      (--> (make-machine T 
-                        (make-env B ...)
-                        (make-stack (make-frame X S_1 E_1)
+                        E
+                        (make-stack (make-frame X S_1 (make-env B ...))
                                     F ...))
           (make-machine S_1 
-                        (make-env (make-binding X 666) 
+                        (make-env (make-binding X (μ T E))
                                   B ...)
                         (make-stack F ...)))))
+  
+  (traces caek-abstract
+          (term (make-machine 7 
+                              (make-env)
+                              (make-stack (make-frame x x (make-env))))))
+  
   )
