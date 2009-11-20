@@ -1,5 +1,5 @@
 (module midtgaard2008 scheme
-  (require redex)
+  (require redex "redex-util.ss")
   
   (define-language caek-lang-core
     ;; Programs
@@ -10,7 +10,8 @@
        V]
     
     ;; Serious Expressions
-    [S (let (X S)
+    [S T
+       (let (X S)
          S)
        (S S)]
     
@@ -18,21 +19,33 @@
     [V C
        (λ X S)]
     
+    [X variable-not-otherwise-mentioned]
+    
     [C number])
+  
+  (test-match caek-lang-core C (term 1))
+  (test-match caek-lang-core V (term 1))
+  (test-match caek-lang-core V (term (λ X 1)))
+  (test-match caek-lang-core V (term (λ X X)))
+  (test-match caek-lang-core S
+              (term (let (x 3)
+                      ((λ y y) x))))
+  (test-match caek-lang-core P
+              (term (let (x 3)
+                      ((λ y y) x))))
   
   (define-extended-language caek-lang
     caek-lang-core
     
-    ;; Machine State
-    [M (S E K)]
+    ;; Val - values
+    [W C
+       ((λ X S) E)]
     
-    ;; Control Stack
-    [K (X S E)]
+    ;; Env - environments
+    [E ((X W) ...)]
     
-    ;;
-    [E (B ...)]
-    
-    ;; Binding
-    [B (X C)]
+    ;; - stacks
+    [K stop
+       ((X S E) ... k)])
   
   )
