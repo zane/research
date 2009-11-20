@@ -94,6 +94,11 @@
   (define caek-abstract
     (reduction-relation
      caek-lang
+     ;; is this rule necessary?
+     (--> (machine X
+                   (env B_0 ... (binding X W) B_1 ...)
+                   (stack stop))
+          W)
      (--> (machine T 
                    E
                    (stack (frame X S_1 (env B ...))
@@ -167,6 +172,22 @@
                           (env (binding y 1))
                           (stack (frame x x (env))
                                  stop))))
+  (test--> caek-abstract
+           (term (machine x
+                          (env (binding y 3)
+                               (binding x 2))
+                          (stack stop)))
+           (term 2))
+  
+  (traces caek-abstract
+          (term (machine (let (x 1)
+                           (let (y 2)
+                             (let (z (λ x (λ y x)))
+                               (let (q (z x))
+                                 (let (r (q y))
+                                   r)))))
+                         (env (binding x 3))
+                         (stack stop))))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Collecting Semantics
