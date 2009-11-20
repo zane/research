@@ -109,16 +109,27 @@
           (make-machine S 
                         (make-env (make-binding X (μ T (make-env B ...)))
                                   B ...)
-                        K))))
+                        K))
+     (--> (make-machine (T_0 T_1)
+                        E
+                        K)
+          (make-machine S_1 
+                        (make-env (make-binding X W)
+                                  B_1 ...)
+                        K)
+          (where (term (make-closure (λ X S_1) (make-env B_1 ...)))
+                 (term (μ T_0 E)))
+          (where (term W)
+                 (term (μ T_1 E))))))
   
-  (test-->> caek-abstract
-            (term (make-machine 7 
-                                (make-env)
-                                (make-stack (make-frame x x (make-env))
-                                            stop)))
-            (term (make-machine x
-                                (make-env (make-binding x 7))
-                                (make-stack stop))))
+  (test--> caek-abstract
+           (term (make-machine 7 
+                               (make-env)
+                               (make-stack (make-frame x x (make-env))
+                                           stop)))
+           (term (make-machine x
+                               (make-env (make-binding x 7))
+                               (make-stack stop))))
   (test--> caek-abstract
            (term (make-machine (let (x 3)
                                  x)
@@ -126,6 +137,13 @@
                                (make-stack stop)))
            (term (make-machine x
                                (make-env (make-binding x 3))
+                               (make-stack stop))))
+  (test--> caek-abstract
+           (term (make-machine ((λ x x) 1)
+                               (make-env)
+                               (make-stack stop)))
+           (term (make-machine x
+                               (make-env (make-binding x 1))
                                (make-stack stop))))
   
   )
