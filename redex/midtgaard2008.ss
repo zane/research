@@ -42,11 +42,11 @@
     [B (make-binding X W)]
     
     [K stop
-       (make-stack F ...)]
+       (make-stack F ... stop)]
     [F (make-frame X S E)])
   
   (test-match caek-lang M
-              (term (make-machine 7 (make-env) (make-stack))))
+              (term (make-machine 7 (make-env) (make-stack stop))))
   (test-match caek-lang E (term (make-env)))
   (test-match caek-lang E (term (make-env (make-binding x 3))))
   (test-match caek-lang E (term (make-env (make-binding x 3) 
@@ -58,8 +58,9 @@
                                             (make-closure (λ x x) 
                                                           (make-env))))))
   (test-match caek-lang K (term stop))
-  (test-match caek-lang K (term (make-stack)))
-  (test-match caek-lang K (term (make-stack (make-frame x x (make-env)))))
+  (test-match caek-lang K (term (make-stack stop)))
+  (test-match caek-lang K (term (make-stack (make-frame x x (make-env))
+                                            stop)))
   
   (define-metafunction caek-lang
     [(μ C E) C]
@@ -96,15 +97,19 @@
      (--> (make-machine T 
                         E
                         (make-stack (make-frame X S_1 (make-env B ...))
-                                    F ...))
+                                    F ... stop))
           (make-machine S_1 
                         (make-env (make-binding X (μ T E))
                                   B ...)
-                        (make-stack F ...)))))
+                        (make-stack F ... stop)))))
   
-  (traces caek-abstract
-          (term (make-machine 7 
-                              (make-env)
-                              (make-stack (make-frame x x (make-env))))))
+  (test-->> caek-abstract
+            (term (make-machine 7 
+                                (make-env)
+                                (make-stack (make-frame x x (make-env))
+                                            stop)))
+            (term (make-machine x
+                                (make-env (make-binding x 7))
+                                (make-stack stop))))
   
   )
