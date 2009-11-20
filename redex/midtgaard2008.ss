@@ -73,7 +73,7 @@
                             x))
                   (rest env))
            => third]
-          [else (error "not found")]))
+          [else #f]))
   
   (test-equal (apply-env (term (make-env (make-binding x 3)
                                          (make-binding y 2)))
@@ -167,4 +167,35 @@
                                (make-env (make-binding y 1))
                                (make-stack (make-frame x x (make-env))
                                            stop))))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Collecting Semantics
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (define-extended-language caek-cs
+    caek-lang
+    
+    [ESet (make-eset E ...)]
+    [WSet (make-wset W ...)])
+  
+  
+  (define-metafunction caek-cs
+    [(μ_c C ESet) (make-wset C)]
+    [(μ_c X ESet) (make-wset ,@(filter (λ (W) W)
+                                      (map (λ (E)
+                                             (apply-env E
+                                                        (term X)))
+                                           (rest (term ESet)))))]
+    #;[(μ_c (λ X S) E) (make-closure (λ X S) E)])
+  
+  (test-equal (term (μ_c 1 (make-eset (make-env))))
+              (term (make-wset 1)))
+  (test-equal (term (μ_c 3 (make-eset (make-env (make-binding x 1)
+                                                (make-binding y 2)))))
+              (term (make-wset 3)))
+  (test-equal (term (μ_c x (make-eset (make-env (make-binding x 1))
+                          (make-env (make-binding x 2))
+                          (make-env (make-binding x 3)))))
+              (term (make-wset 
+  
   )
