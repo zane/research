@@ -15,7 +15,7 @@
     [V C
        (λ X S)]
     
-    [X variable-not-otherwise-mentioned]
+    [(X Y) variable-not-otherwise-mentioned]
     
     [C number])
   
@@ -120,6 +120,19 @@
           (where (term (make-closure (λ X S_1) (make-env B_1 ...)))
                  (term (μ T_0 E)))
           (where (term W)
+                 (term (μ T_1 E))))
+     (--> (make-machine (let (X (T_0 T_1))
+                          S)
+                        E
+                        (make-stack F ... stop))
+          (make-machine S_1
+                        (make-env (make-binding Y W)
+                                  B_1 ...)
+                        (make-stack (make-frame X S E)
+                                    F ... stop))
+          (where (term (make-closure (λ Y S_1) (make-env B_1 ...)))
+                 (term (μ T_0 E)))
+          (where (term W)
                  (term (μ T_1 E))))))
   
   (test--> caek-abstract
@@ -145,5 +158,13 @@
            (term (make-machine x
                                (make-env (make-binding x 1))
                                (make-stack stop))))
-  
+  (test--> caek-abstract
+           (term (make-machine (let (x ((λ y y) 1))
+                                 x)
+                               (make-env)
+                               (make-stack stop)))
+           (term (make-machine y
+                               (make-env (make-binding y 1))
+                               (make-stack (make-frame x x (make-env))
+                                           stop))))
   )
