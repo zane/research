@@ -43,6 +43,8 @@
     [K stop
        (make-stack (X S E) ...)])
   
+  (test-match caek-lang M
+              (term (make-machine 7 (make-env) (make-stack))))
   (test-match caek-lang E (term (make-env)))
   (test-match caek-lang E (term (make-env (make-binding x 3))))
   (test-match caek-lang E (term (make-env (make-binding x 3) 
