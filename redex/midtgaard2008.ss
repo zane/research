@@ -41,26 +41,27 @@
     [E (env B ...)]
     [B (binding X W)]
     
-    [K stop
-       (stack F ... stop)]
+    [K (stack F ... stop)]
     [F (frame X S E)])
   
-  (test-match caek-lang M
-              (term (machine 7 (env) (stack stop))))
-  (test-match caek-lang E (term (env)))
-  (test-match caek-lang E (term (env (binding x 3))))
-  (test-match caek-lang E (term (env (binding x 3) 
-                                     (binding y 4))))
-  (test-match caek-lang E 
-              (term (env (binding x 3)
-                         (binding y 4)
-                         (binding z 
-                                  (closure (λ x x) 
-                                           (env))))))
-  (test-match caek-lang K (term stop))
-  (test-match caek-lang K (term (stack stop)))
-  (test-match caek-lang K (term (stack (frame x x (env))
-                                       stop)))
+  (define (caek-lang-test-suite)
+    (test-match caek-lang M
+                (term (machine 7 (env) (stack stop))))
+    (test-match caek-lang E (term (env)))
+    (test-match caek-lang E (term (env (binding x 3))))
+    (test-match caek-lang E (term (env (binding x 3) 
+                                       (binding y 4))))
+    (test-match caek-lang E 
+                (term (env (binding x 3)
+                           (binding y 4)
+                           (binding z 
+                                    (closure (λ x x) 
+                                             (env))))))
+    (test-match caek-lang K (term stop))
+    (test-match caek-lang K (term (stack stop)))
+    (test-match caek-lang K (term (stack (frame x x (env))
+                                         stop)))
+    (test-results))
   
   (define-metafunction caek-lang
     [(μ C E) C]
@@ -73,32 +74,31 @@
                             x))
                   (rest env))
            => third]
-          [else #f]))
+          [else (term error)]))
   
-  (test-equal (apply-env (term (env (binding x 3)
-                                    (binding y 2)))
-                         (term x))
-              3)
-  (test-equal (apply-env (term (env (binding x 3)
-                                    (binding y 2)))
-                         (term y))
-              2)
+  (define (apply-env-test-suite)
+    (test-equal (apply-env (term (env (binding x 3)
+                                      (binding y 2)))
+                           (term x))
+                3)
+    (test-equal (apply-env (term (env (binding x 3)
+                                      (binding y 2)))
+                           (term y))
+                2)
+    (test-results))
   
-  (test-equal (term (μ 1 (env)))
-              (term 1))
-  (test-equal (term (μ x (env (binding x 2))))
-              (term 2))
-  (test-equal (term (μ (λ x x) (env)))
-              (term (closure (λ x x) (env))))
+  (define (μ-test-suite)
+    (test-equal (term (μ 1 (env)))
+                (term 1))
+    (test-equal (term (μ x (env (binding x 2))))
+                (term 2))
+    (test-equal (term (μ (λ x x) (env)))
+                (term (closure (λ x x) (env))))
+    (test-results))
   
   (define caek-abstract
     (reduction-relation
      caek-lang
-     ;; is this rule necessary?
-     (--> (machine X
-                   (env B_0 ... (binding X W) B_1 ...)
-                   (stack stop))
-          W)
      (--> (machine T 
                    E
                    (stack (frame X S_1 (env B ...))
@@ -140,63 +140,47 @@
           (where (term W)
                  (term (μ T_1 E))))))
   
-  (test--> caek-abstract
-           (term (machine 7 
-                          (env)
-                          (stack (frame x x (env))
-                                 stop)))
-           (term (machine x
-                          (env (binding x 7))
-                          (stack stop))))
-  (test--> caek-abstract
-           (term (machine (let (x 3)
-                            x)
-                          (env)
-                          (stack stop)))
-           (term (machine x
-                          (env (binding x 3))
-                          (stack stop))))
-  (test--> caek-abstract
-           (term (machine ((λ x x) 1)
-                          (env)
-                          (stack stop)))
-           (term (machine x
-                          (env (binding x 1))
-                          (stack stop))))
-  (test--> caek-abstract
-           (term (machine (let (x ((λ y y) 1))
-                            x)
-                          (env)
-                          (stack stop)))
-           (term (machine y
-                          (env (binding y 1))
-                          (stack (frame x x (env))
-                                 stop))))
-  (test--> caek-abstract
-           (term (machine x
-                          (env (binding y 3)
-                               (binding x 2))
-                          (stack stop)))
-           (term 2))
-  (test-->> caek-abstract
-            (term (machine (let (x 1)
-                             (let (y 2)
-                               (let (z (λ x (λ y x)))
-                                 (let (q (z x))
-                                   (let (r (q y))
-                                     r)))))
-                           (env (binding x 3))
-                           (stack stop)))
-            (term 1))
-  #;(traces caek-abstract
-            (term (machine (let (x 1)
-                             (let (y 2)
-                               (let (z (λ x (λ y x)))
-                                 (let (q (z x))
-                                   (let (r (q y))
-                                     r)))))
-                           (env (binding x 3))
+  (define (caek-abstract-test-suite)
+    (test--> caek-abstract
+             (term (machine 7 
+                            (env)
+                            (stack (frame x x (env))
+                                   stop)))
+             (term (machine x
+                            (env (binding x 7))
+                            (stack stop))))
+    (test--> caek-abstract
+             (term (machine (let (x 3)
+                              x)
+                            (env)
+                            (stack stop)))
+             (term (machine x
+                            (env (binding x 3))
+                            (stack stop))))
+    (test--> caek-abstract
+             (term (machine ((λ x x) 1)
+                            (env)
+                            (stack stop)))
+             (term (machine x
+                            (env (binding x 1))
+                            (stack stop))))
+    (test--> caek-abstract
+             (term (machine (let (x ((λ y y) 1))
+                              x)
+                            (env)
+                            (stack stop)))
+             (term (machine y
+                            (env (binding y 1))
+                            (stack (frame x x (env))
+                                   stop))))
+    (traces caek-abstract
+            (term (machine (let (i (λ x x))
+                             (let (g i)
+                               (let (t ((λ x 3) 1))
+                                 (i t))))
+                           (env)
                            (stack stop))))
+    (test-results))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Collecting Semantics
@@ -214,10 +198,12 @@
     [Any P
          M])
   
-  (test-match caek-cs A
-              (term (set (machine 7 
-                                  (env)
-                                  (stack stop)))))
+  (define (caek-cs-test-suite)
+    (test-match caek-cs A
+                (term (set (machine 7 
+                                    (env)
+                                    (stack stop)))))
+    (test-results))
   
   (define-metafunction caek-cs
     [(μ_c C ESet) (set C)]
@@ -230,22 +216,24 @@
                                       (term (closure (λ X S) ,E)))
                                     (rest (term ESet))))])
   
-  (test-equal (term (μ_c 1 (set (env))))
-              (term (set 1)))
-  (test-equal (term (μ_c 3 (set (env (binding x 1)
-                                     (binding y 2)))))
-              (term (set 3)))
-  (test-equal (term (μ_c x (set (env (binding x 1))
-                                (env (binding x 2))
-                                (env (binding x 3)))))
-              (term (set 1 2 3)))
-  (test-equal (term (μ_c (λ x x) (set (env))))
-              (term (set (closure (λ x x) (env)))))
+  (define (μ_c-test-suite)
+    (test-equal (term (μ_c 1 (set (env))))
+                (term (set 1)))
+    (test-equal (term (μ_c 3 (set (env (binding x 1)
+                                       (binding y 2)))))
+                (term (set 3)))
+    (test-equal (term (μ_c x (set (env (binding x 1))
+                                  (env (binding x 2))
+                                  (env (binding x 3)))))
+                (term (set 1 2 3)))
+    (test-equal (term (μ_c (λ x x) (set (env))))
+                (term (set (closure (λ x x) (env)))))
+    (test-results))
   
   (define-metafunction caek-cs
-    [(∪ (set Any_0 ...)
-        (set Any_1 ...))
-     ,(sort (remove-duplicates (term (set Any_0 ... Any_1 ...)))
+    [(∪ (set M_0 ...)
+        (set M_1 ...))
+     ,(sort (remove-duplicates (term (set M_0 ... M_1 ...)))
             sexp<?)])
   
   ;; A SEXP is one of
@@ -300,23 +288,38 @@
                       (sexp<? (rest s1)
                               (rest s2))))]))
   
-  (test-equal (sexp<? 0 0) #f)
-  (test-equal (sexp<? 0 1) #t)
-  (test-equal (sexp<? 1 0) #f)
-  (test-equal (sexp<? 0 'x) #t)
-  (test-equal (sexp<? 'x 0) #f)
-  (test-equal (sexp<? 0 empty) #t)
-  (test-equal (sexp<? empty 0) #f)
-  (test-equal (sexp<? 'x empty) #t)
-  (test-equal (sexp<? empty 'x) #f)
-  (test-equal (sexp<? empty empty) #f)
-  (test-equal (sexp<? '(0) '(1)) #t)
-  (test-equal (sexp<? '(0) '(0)) #f)
-  (test-equal (sexp<? '(0 0) '(0 1)) #t)
-  (test-equal (sexp<? '(1 0) '(0 1)) #f)
-  (test-equal (sexp<? '(0 (0 0)) '(0 (0 1))) #t)
+  (define (sexp<?-test-suite)
+    (test-equal (sexp<? 0 0) #f)
+    (test-equal (sexp<? 0 1) #t)
+    (test-equal (sexp<? 1 0) #f)
+    (test-equal (sexp<? 0 'x) #t)
+    (test-equal (sexp<? 'x 0) #f)
+    (test-equal (sexp<? 0 empty) #t)
+    (test-equal (sexp<? empty 0) #f)
+    (test-equal (sexp<? 'x empty) #t)
+    (test-equal (sexp<? empty 'x) #f)
+    (test-equal (sexp<? empty empty) #f)
+    (test-equal (sexp<? '(0) '(1)) #t)
+    (test-equal (sexp<? '(0) '(0)) #f)
+    (test-equal (sexp<? '(0 0) '(0 1)) #t)
+    (test-equal (sexp<? '(1 0) '(0 1)) #f)
+    (test-equal (sexp<? '(0 (0 0)) '(0 (0 1))) #t)
+    (test-results))
   
-  (define caek-collecting
+  (define caek-f
+    (reduction-relation
+     caek-cs
+     (--> (set M_0 ...
+               M
+               M_1 ...)
+          (∪ (set M_0 ...
+                  M
+                  M_1 ...)
+             (set M_3))
+          (where (M_2 ... M_3 M_4 ...)
+                 ,(apply-reduction-relation caek-abstract (term M))))))
+  
+  (define caek-f_c
     (reduction-relation
      caek-cs
      (--> (set M_0 ...
@@ -350,41 +353,155 @@
              (set (machine S 
                            (env (binding X (μ T (env B ...)))
                                 B ...)
-                           K)))))
-    (--> (set M_0 ...
-              (machine (T_0 T_1)
-                       E
-                       K)
-              M_1 ...)
-         (∪ (set M_0 ...
-                 (machine (T_0 T_1)
-                          E
-                          K)
-                 M_1 ...)
-            (set (machine S_1 
-                          (env (binding X W)
-                               B_1 ...)
-                          K)))
-         (where (term (closure (λ X S_1) (env B_1 ...)))
-                (term (μ T_0 E)))
-         (where (term W)
-                (term (μ T_1 E))))
-    (--> (set M_0 ...
-              (machine (let (X (T_0 T_1))
-                         S)
-                       E
-                       (stack F ... stop))
-              M_1 ...)
-         (∪ (set M_0 ...
-                 (machine (let (X (T_0 T_1))
-                            S)
-                          E
-                          (stack F ... stop))
-                 M_1 ...)
-            (set (machine S_1
-                          (env (binding Y W)
-                               B_1 ...)
-                          (stack (frame X S E)
-                                 F ... stop))))))
+                           K))))
+     (--> (set M_0 ...
+               (machine (T_0 T_1)
+                        E
+                        K)
+               M_1 ...)
+          (∪ (set M_0 ...
+                  (machine (T_0 T_1)
+                           E
+                           K)
+                  M_1 ...)
+             (set (machine S_1 
+                           (env (binding X W)
+                                B_1 ...)
+                           K)))
+          (where (term (closure (λ X S_1) (env B_1 ...)))
+                 (term (μ T_0 E)))
+          (where (term W)
+                 (term (μ T_1 E))))
+     (--> (set M_0 ...
+               (machine (let (X (T_0 T_1))
+                          S)
+                        E
+                        (stack F ... stop))
+               M_1 ...)
+          (∪ (set M_0 ...
+                  (machine (let (X (T_0 T_1))
+                             S)
+                           E
+                           (stack F ... stop))
+                  M_1 ...)
+             (set (machine S_1
+                           (env (binding Y W)
+                                B_1 ...)
+                           (stack (frame X S E)
+                                  F ... stop))))
+          (where (term (closure (λ Y S_1) (env B_1 ...)))
+                 (term (μ T_0 E)))
+          (where (term W)
+                 (term (μ T_1 E))))))
+  
+  (define (caek-f_c-test-suite)
+    (test--> caek-f_c
+             (term (set (machine 7 
+                                 (env)
+                                 (stack (frame x x (env))
+                                        stop))))
+             (term (set (machine 7 
+                                 (env)
+                                 (stack (frame x x (env))
+                                        stop))
+                        (machine x
+                                 (env (binding x 7))
+                                 (stack stop)))))
+    (test--> caek-f_c
+             (term (set (machine (let (x 3)
+                                   x)
+                                 (env)
+                                 (stack stop))))
+             (term (set (machine x
+                                 (env (binding x 3))
+                                 (stack stop))
+                        (machine (let (x 3)
+                                   x)
+                                 (env)
+                                 (stack stop)))))
+    (test--> caek-f_c
+             (term (set (machine ((λ x x) 1)
+                                 (env)
+                                 (stack stop))))
+             (term (set (machine x
+                                 (env (binding x 1))
+                                 (stack stop))
+                        (machine ((λ x x) 1)
+                                 (env)
+                                 (stack stop)))))
+    (test--> caek-f_c
+             (term (set (machine (let (x ((λ y y) 1))
+                                   x)
+                                 (env)
+                                 (stack stop))))
+             (term (set (machine y
+                                 (env (binding y 1))
+                                 (stack (frame x x (env))
+                                        stop))
+                        (machine (let (x ((λ y y) 1))
+                                   x)
+                                 (env)
+                                 (stack stop)))))
+    (test-results))
+  
+  (define (lemma4.1-test-suite n)
+    (redex-check caek-lang
+                 (T E)
+                 (equal? (term (set (μ T E)))
+                         (term (μ_c T (set E))))
+                 #:attempts n))
+  
+  (define (lemma4.2-test-suite n)
+    (redex-check caek-cs
+                 (set S 
+                      (env)
+                      (stack stop))
+                 (equal? (apply-reduction-relation* caek-f (term A))
+                         (apply-reduction-relation* caek-f_c (term A)))
+                 #:attempts n))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Traces
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (define (t1)
+    (traces caek-abstract
+            (term (machine (let (x 1)
+                             (let (y 2)
+                               (let (z (λ x (λ y x)))
+                                 (let (q (z x))
+                                   (let (r (q y))
+                                     r)))))
+                           (env (binding x 3))
+                           (stack stop)))))
+  
+  (define (t2)
+    (traces caek-abstract
+            (term (machine (let (g (λ z z))
+                             (let (f (λ k (k 2)))
+                               (let (y (f (λ x x)))
+                                 (g y))))
+                           (env)
+                           (stack stop)))))
+  
+  (define (t3)
+    (traces caek-f
+            (term (set (machine (let (g (λ z z))
+                                  (let (f (λ k (k 2)))
+                                    (let (y (f (λ x x)))
+                                      (g y))))
+                                (env)
+                                (stack stop))))))
+  
+  (define (t4)
+    (traces caek-abstract
+            (term (machine (let (g (λ z z))
+                             (let (f (λ k (k 2)))
+                               (let (y (f (λ x x)))
+                                 (g y))))
+                           (env)
+                           (stack stop)))))
+  
+  
   
   )
