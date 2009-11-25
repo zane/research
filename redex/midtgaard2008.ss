@@ -188,6 +188,15 @@
                            (env (binding x 3))
                            (stack stop)))
             (term 1))
+  #;(traces caek-abstract
+            (term (machine (let (x 1)
+                             (let (y 2)
+                               (let (z (λ x (λ y x)))
+                                 (let (q (z x))
+                                   (let (r (q y))
+                                     r)))))
+                           (env (binding x 3))
+                           (stack stop))))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Collecting Semantics
@@ -311,10 +320,71 @@
     (reduction-relation
      caek-cs
      (--> (set M_0 ...
-               M
+               (machine T 
+                        E
+                        (stack (frame X S_1 (env B ...))
+                               F ... stop))
                M_1 ...)
-          (∪ (set M_0 ... )
-             (∪ (set M)
-                (set M_1 ...))))))
+          (∪ (set M_0 ...  
+                  (machine T 
+                           E
+                           (stack (frame X S_1 (env B ...))
+                                  F ... stop))
+                  M_1 ...)
+             (set (machine S_1 
+                           (env (binding X (μ T E))
+                                B ...)
+                           (stack F ... stop)))))
+     (--> (set M_0 ...
+               (machine (let (X T)
+                          S)
+                        (env B ...)
+                        K)
+               M_1 ...)
+          (∪ (set M_0 ...
+                  (machine (let (X T)
+                             S)
+                           (env B ...)
+                           K)
+                  M_1 ...)
+             (set (machine S 
+                           (env (binding X (μ T (env B ...)))
+                                B ...)
+                           K)))))
+    (--> (set M_0 ...
+              (machine (T_0 T_1)
+                       E
+                       K)
+              M_1 ...)
+         (∪ (set M_0 ...
+                 (machine (T_0 T_1)
+                          E
+                          K)
+                 M_1 ...)
+            (set (machine S_1 
+                          (env (binding X W)
+                               B_1 ...)
+                          K)))
+         (where (term (closure (λ X S_1) (env B_1 ...)))
+                (term (μ T_0 E)))
+         (where (term W)
+                (term (μ T_1 E))))
+    (--> (set M_0 ...
+              (machine (let (X (T_0 T_1))
+                         S)
+                       E
+                       (stack F ... stop))
+              M_1 ...)
+         (∪ (set M_0 ...
+                 (machine (let (X (T_0 T_1))
+                            S)
+                          E
+                          (stack F ... stop))
+                 M_1 ...)
+            (set (machine S_1
+                          (env (binding Y W)
+                               B_1 ...)
+                          (stack (frame X S E)
+                                 F ... stop))))))
   
   )
