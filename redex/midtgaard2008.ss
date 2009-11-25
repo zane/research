@@ -173,13 +173,6 @@
                             (env (binding y 1))
                             (stack (frame x x (env))
                                    stop))))
-    (traces caek-abstract
-            (term (machine (let (i (λ x x))
-                             (let (g i)
-                               (let (t ((λ x 3) 1))
-                                 (i t))))
-                           (env)
-                           (stack stop))))
     (test-results))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -189,14 +182,9 @@
   (define-extended-language caek-cs
     caek-lang
     
-    [A (set M ...)]
+    [MSet (set M ...)]
     
-    [ESet (set E ...)]
-    
-    [WSet (set W ...)]
-    
-    [Any P
-         M])
+    [ESet (set E ...)])
   
   (define (caek-cs-test-suite)
     (test-match caek-cs A
@@ -444,6 +432,10 @@
                                  (stack stop)))))
     (test-results))
   
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Lemma Testing
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   (define (lemma4.1-test-suite n)
     (redex-check caek-lang
                  (T E)
@@ -502,6 +494,13 @@
                            (env)
                            (stack stop)))))
   
-  
+  (define (t5)
+    (traces caek-abstract
+            (term (machine (let (i (λ x x))
+                             (let (g i)
+                               (let (t ((λ x 3) 1))
+                                 (i t))))
+                           (env)
+                           (stack stop)))))
   
   )
