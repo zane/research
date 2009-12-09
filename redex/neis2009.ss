@@ -137,7 +137,16 @@
                 E
                 (stack (APPLY O N_1 N_2)
                        V ...)
-                D))))
+                D))
+     (--> (cesd (code Ret i ...)
+                E
+                (stack V_0 V ...)
+                (dumps (dump C_1 E_1 (stack V_1 ...))
+                       U ...))
+          (cesd C_1
+                E_1
+                (stack V_0 V_1 ...)
+                (dumps U ...)))))
   
   (define-metafunction cesd-lang
     [(APPLY O N_1 N_2) ,(cond [(equal? (term +) (term O))
@@ -270,13 +279,23 @@
                          (env)
                          (stack 3)
                          (dumps))))
+    (test--> secd-rr
+             (term (cesd (code Ret App)
+                         (env)
+                         (stack 3 4)
+                         (dumps (dump (code Swap)
+                                      (env 1)
+                                      (stack 2)))))
+             (term (cesd (code Swap)
+                         (env 1)
+                         (stack 3 2)
+                         (dumps))))
     (test-results))
   
   (define (test)
     (secd-lang-test-suite)
     (apply-test-suite)
-    (secd-rr-test-suite)
-    (test-results))
+    (secd-rr-test-suite))
   
   (test)
   
