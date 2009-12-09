@@ -128,7 +128,41 @@
                 (dumps (dump (code i ...) 
                              E 
                              (stack V_0 ...))
-                       U ...)))))
+                       U ...)))
+     (--> (cesd (code O i ...)
+                E
+                (stack N_1 N_2 V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack (APPLY * N_1 N_2)
+                       V ...)
+                D))))
+  
+  (define-metafunction cesd-lang
+    [(APPLY O N_1 N_2) ,(cond [(equal? (term +) (term O))
+                               (+ (term N_1)
+                                  (term N_2))]
+                              [(equal? (term -) (term O))
+                               (- (term N_1)
+                                  (term N_2))]
+                              [(equal? (term *) (term O))
+                               (* (term N_1)
+                                  (term N_2))]
+                              [(equal? (term /) (term O))
+                               (/ (term N_1)
+                                  (term N_2))])])
+  
+  (define (apply-test-suite)
+    (test-equal (term (APPLY + 1 2))
+                (term 3))
+    (test-equal (term (APPLY - 3 2))
+                (term 1))
+    (test-equal (term (APPLY * 3 4))
+                (term 12))
+    (test-equal (term (APPLY / 16 2))
+                (term 8))
+    (test-results))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
@@ -215,13 +249,13 @@
                          (env 0)
                          (stack 1 
                                 (RCL (env 2) 
-                                    (code Swap))
+                                     (code Swap))
                                 3)
                          (dumps)))
              (term (cesd (code Swap)
                          (env 1
                               (RCL (env 2) 
-                                     (code swap))
+                                   (code Swap))
                               2)
                          (stack)
                          (dumps (dump (code Ret)
@@ -231,6 +265,7 @@
   
   (define (test)
     (secd-lang-test-suite)
+    (apply-test-suite)
     (secd-rr-test-suite)
     (test-results))
   
