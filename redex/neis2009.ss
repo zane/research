@@ -1,40 +1,7 @@
-;; The first three lines of this file were inserted by DrScheme. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname neis2009) (read-case-sensitive #t) (teachpacks ((lib "world.ss" "teachpack" "htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "world.ss" "teachpack" "htdp")))))
 (module neis2009 scheme
   (require redex "redex-util.ss")
   
-  (define-language g-lang
-    [τ α 
-       β 
-       (→ τ τ)
-       (× τ τ)
-       (∀ α τ)
-       (∃ α τ)]
-    [v x
-       c
-       (λ (: x τ) e)
-       (cons v v)
-       (λ α e)
-       (pack τ v τ)]
-    [e v
-       (e e)
-       (cons e e)
-       (. e 1)
-       (. e 2)
-       (e τ)
-       (pack τ e τ)
-       (unpack α x e e)
-       (cast τ τ)
-       (new (≈ α τ) e)]
-    [σ ((≈ α τ) ...)]
-    [ζ (config σ e)]
-    [Δ (O ...)]
-    [O α
-       (≈ α τ)]
-    [Τ ((: x τ) ...)])
-  
-  (define-language secd-lang
+  (define-language cesd-lang
     ;; instructions
     [i Swap
        Dup
@@ -57,7 +24,7 @@
        (RCL E C) ;; recursive closure
        (PR V V) ;; pair
        ]
-
+    
     [E (env V ...)] ;; environment
     [C (code i ...)] ;; code
     [S (stack V ...)] ;; stack
@@ -71,7 +38,77 @@
        /]
     
     ;; numbers
-    [N number]
-    
-    )
+    [N number])
   
+  (define (secd-lang-test-suite)
+    (test-match cesd-lang CESD 
+                (term (cesd (code) (env) (stack) 
+                            (dump (code) (env) (stack))))))
+  
+  (define secd-rr
+    (reduction-relation
+     cesd-lang
+     
+     (--> (cesd (code Swap i ...) 
+                E 
+                (stack V_1 V_2 V_3 ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack V_2 V_1 V_3 ...)
+                D))
+     (--> (cesd (code Dup i ...) 
+                E 
+                (stack V_1 V_2 ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack V_1 V_1 V_2 ...)
+                D))
+     (--> (cesd (code (PushV N) i ...)
+                E
+                (stack V_0 ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack V_0 ... N)
+                D))))
+  
+  (define (secd-rr-test-suite)
+    (test--> secd-rr
+             (term (cesd (code Swap) 
+                         (env) 
+                         (stack 1 2 3) 
+                         (dump (code) (env) (stack))))
+             (term (cesd (code)
+                         (env)
+                         (stack 2 1 3) 
+                         (dump (code) (env) (stack)))))
+    (test--> secd-rr
+             (term (cesd (code Dup) 
+                         (env) 
+                         (stack 1 2 3) 
+                         (dump (code) (env) (stack))))
+             (term (cesd (code)
+                         (env)
+                         (stack 1 1 2 3) 
+                         (dump (code) (env) (stack)))))
+    (test--> secd-rr
+             (term (cesd (code (PushV 4)) 
+                         (env) 
+                         (stack 1 2 3) 
+                         (dump (code) (env) (stack))))
+             (term (cesd (code)
+                         (env)
+                         (stack 1 2 3 4)
+                         (dump (code) (env) (stack)))))
+    (test-results))
+  
+  (define (test)
+    (secd-lang-test-suite)
+    (secd-rr-test-suite)
+    (test-results))
+  
+  (test)
+  
+  )
