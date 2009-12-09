@@ -187,7 +187,31 @@
           (cesd C_1
                 E
                 S
-                (dumps U ...)))))
+                (dumps U ...)))
+     (--> (cesd (code MkPair i ...)
+                E
+                (stack V_1 V_2 V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack (PR V_1 V_2) V ...)
+                D))
+     (--> (cesd (code Fst i ...)
+                E
+                (stack (PR V_1 V_2) V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack V_1 V ...)
+                D))
+     (--> (cesd (code Snd i ...)
+                E
+                (stack (PR V_1 V_2) V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack V_2 V ...)
+                D))))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
@@ -352,6 +376,33 @@
              (term (cesd (code (Op *))
                          (env 0)
                          (stack 1)
+                         (dumps))))
+    (test--> secd-rr
+             (term (cesd (code MkPair)
+                         (env)
+                         (stack 1 2 3)
+                         (dumps)))
+             (term (cesd (code)
+                         (env)
+                         (stack (PR 1 2) 3)
+                         (dumps))))
+    (test--> secd-rr
+             (term (cesd (code Fst)
+                         (env)
+                         (stack (PR 1 2) 3)
+                         (dumps)))
+             (term (cesd (code)
+                         (env)
+                         (stack 1 3)
+                         (dumps))))
+    (test--> secd-rr
+             (term (cesd (code Snd)
+                         (env)
+                         (stack (PR 1 2) 3)
+                         (dumps)))
+             (term (cesd (code)
+                         (env)
+                         (stack 2 3)
                          (dumps))))
     
     (test-results))
