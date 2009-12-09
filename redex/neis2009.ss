@@ -211,7 +211,27 @@
           (cesd (code i ...)
                 E
                 (stack V_2 V ...)
-                D))))
+                D))
+     (--> (cesd (code Eq i ...)
+                E
+                (stack V_1 V_2 V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack 1 V ...)
+                D)
+          (side-condition (equal? (term V_1) 
+                                  (term V_2))))
+     (--> (cesd (code Eq i ...)
+                E
+                (stack V_1 V_2 V ...)
+                D)
+          (cesd (code i ...)
+                E
+                (stack 0 V ...)
+                D)
+          (side-condition (not (equal? (term V_1)
+                                       (term V_2)))))))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
