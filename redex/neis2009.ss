@@ -135,7 +135,7 @@
                 D)
           (cesd (code i ...)
                 E
-                (stack (APPLY * N_1 N_2)
+                (stack (APPLY O N_1 N_2)
                        V ...)
                 D))))
   
@@ -261,6 +261,15 @@
                          (dumps (dump (code Ret)
                                       (env 0)
                                       (stack 3))))))
+    (test--> secd-rr
+             (term (cesd (code +)
+                         (env)
+                         (stack 1 2)
+                         (dumps)))
+             (term (cesd (code)
+                         (env)
+                         (stack 3)
+                         (dumps))))
     (test-results))
   
   (define (test)
