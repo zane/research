@@ -72,10 +72,15 @@
                         (env)
                         (stack)
                         (dumps)))))
-  #;
+  
   (define (t2)
-    (traces secd-rr (cesd (code (PushN 1)
-                                (PushN (CL (env) ()))))))
+    (traces secd-rr
+            (term (cesd (code (PushC (code (PushV 3)
+                                           (pushV 2)
+                                           (Op -))))
+                        (env 1 2)
+                        (stack)
+                        (dumps)))))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; REDUCTION RELATIONS
@@ -161,7 +166,7 @@
                 D)
           (cesd (code i ...)
                 E
-                (stack (APPLY O N_1 N_2)
+                (stack (APPLY O N_2 N_1)
                        V ...)
                 D))
      (--> (cesd (code Ret i ...)
