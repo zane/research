@@ -9,6 +9,7 @@
     ;; instructions
     [i Swap
        Dup
+       (PushN N)
        (PushV N)
        (Op O)
        (PushC C)
@@ -60,6 +61,23 @@
                             (dumps)))))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; TRACES
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (define (t1)
+    (traces secd-rr
+            (term (cesd (code (PushN 1)
+                              (PushN 2)
+                              (Op *))
+                        (env)
+                        (stack)
+                        (dumps)))))
+  #;
+  (define (t2)
+    (traces secd-rr (cesd (code (PushN 1)
+                                (PushN (CL (env) ()))))))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; REDUCTION RELATIONS
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
@@ -89,7 +107,7 @@
                 D)
           (cesd (code i ...)
                 E
-                (stack V_0 ... N)
+                (stack (LOOKUP N E) V_0 ...)
                 D))
      (--> (cesd (code (PushN N) i ...)
                 E
@@ -137,7 +155,7 @@
                              E 
                              (stack V_0 ...))
                        U ...)))
-     (--> (cesd (code O i ...)
+     (--> (cesd (code (Op O) i ...)
                 E
                 (stack N_1 N_2 V ...)
                 D)
@@ -253,13 +271,13 @@
                          (stack 1 1 2 3) 
                          (dumps))))
     (test--> secd-rr
-             (term (cesd (code (PushV 4)) 
-                         (env) 
-                         (stack 1 2 3) 
+             (term (cesd (code (PushV 2)) 
+                         (env 1 2 3 4) 
+                         (stack) 
                          (dumps)))
              (term (cesd (code)
-                         (env)
-                         (stack 1 2 3 4)
+                         (env 1 2 3 4)
+                         (stack 3)
                          (dumps))))
     (test--> secd-rr
              (term (cesd (code (PushN 4))
@@ -331,7 +349,7 @@
                                       (env 0)
                                       (stack 3))))))
     (test--> secd-rr
-             (term (cesd (code +)
+             (term (cesd (code (Op +))
                          (env)
                          (stack 1 2)
                          (dumps)))
@@ -424,6 +442,17 @@
                          (env)
                          (stack 2 3)
                          (dumps))))
+    (test-->> secd-rr
+              (term (cesd (code (PushN 1)
+                                (PushN 2)
+                                (Op *))
+                          (env)
+                          (stack)
+                          (dumps)))
+              (term (cesd (code)
+                          (env)
+                          (stack 2)
+                          (dumps))))
     
     (test-results))
   
@@ -445,7 +474,12 @@
                                (/ (term N_1)
                                   (term N_2))])])
   
-  (define (apply-test-suite)
+  (define-metafunction cesd-lang
+    [(LOOKUP N E) ,(list-ref (rest (term E)) (term N))])
+  
+  (define (metafunction-test-suite)
+    (test-equal (term (LOOKUP 3 (env 1 2 3 4 5)))
+                (term 4))
     (test-equal (term (APPLY + 1 2))
                 (term 3))
     (test-equal (term (APPLY - 3 2))
@@ -462,9 +496,7 @@
   
   (define (test)
     (secd-lang-test-suite)
-    (apply-test-suite)
+    (metafunction-test-suite)
     (secd-rr-test-suite))
-  
-  (test)
   
   )
