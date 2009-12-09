@@ -178,7 +178,16 @@
                              (env)
                              (stack))
                        U ...))
-          (side-condition (not (zero? (term V_0)))))))
+          (side-condition (not (zero? (term V_0)))))
+     (--> (cesd (code Join i ...)
+                E
+                S
+                (dumps (dump C_1 E_1 S_1)
+                       U ...))
+          (cesd C_1
+                E
+                S
+                (dumps U ...)))))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
@@ -333,6 +342,17 @@
                                 (dump (code (Op *))
                                       (env 5 6)
                                       (stack 3 4))))))
+    (test--> secd-rr
+             (term (cesd (code Join Swap)
+                         (env 0)
+                         (stack 1)
+                         (dumps (dump (code (Op *))
+                                      (env 5 6)
+                                      (stack 3 4)))))
+             (term (cesd (code (Op *))
+                         (env 0)
+                         (stack 1)
+                         (dumps))))
     
     (test-results))
   
