@@ -1,6 +1,10 @@
 (module neis2009 scheme
   (require redex "redex-util.ss")
   
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; LANGUAGES
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   (define-language cesd-lang
     ;; instructions
     [i Swap
@@ -54,6 +58,10 @@
                             (env)
                             (stack (CL (env 1) (code)))
                             (dumps)))))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; REDUCTION RELATIONS
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (define secd-rr
     (reduction-relation
@@ -146,32 +154,31 @@
           (cesd C_1
                 E_1
                 (stack V_0 V_1 ...)
-                (dumps U ...)))))
-  
-  (define-metafunction cesd-lang
-    [(APPLY O N_1 N_2) ,(cond [(equal? (term +) (term O))
-                               (+ (term N_1)
-                                  (term N_2))]
-                              [(equal? (term -) (term O))
-                               (- (term N_1)
-                                  (term N_2))]
-                              [(equal? (term *) (term O))
-                               (* (term N_1)
-                                  (term N_2))]
-                              [(equal? (term /) (term O))
-                               (/ (term N_1)
-                                  (term N_2))])])
-  
-  (define (apply-test-suite)
-    (test-equal (term (APPLY + 1 2))
-                (term 3))
-    (test-equal (term (APPLY - 3 2))
-                (term 1))
-    (test-equal (term (APPLY * 3 4))
-                (term 12))
-    (test-equal (term (APPLY / 16 2))
-                (term 8))
-    (test-results))
+                (dumps U ...)))
+     (--> (cesd (code (Sel C_1 C_2) i ...)
+                E
+                (stack V_0 V_1 ...)
+                (dumps U ...))
+          (cesd C_1
+                E
+                (stack V_1 ...)
+                (dumps (dump (code i ...)
+                             (env)
+                             (stack))
+                       U ...))
+          (side-condition (zero? (term V_0))))
+     (--> (cesd (code (Sel C_1 C_2) i ...)
+                E
+                (stack V_0 V_1 ...)
+                (dumps U ...))
+          (cesd C_2
+                E
+                (stack V_1 ...)
+                (dumps (dump (code i ...)
+                             (env)
+                             (stack))
+                       U ...))
+          (side-condition (not (zero? (term V_0)))))))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
@@ -290,7 +297,77 @@
                          (env 1)
                          (stack 3 2)
                          (dumps))))
+    (test--> secd-rr
+             (term (cesd (code (Sel (code Swap)
+                                    (code App))
+                               Ret)
+                         (env 0)
+                         (stack 0 1)
+                         (dumps (dump (code (Op *))
+                                      (env 5 6)
+                                      (stack 3 4)))))
+             (term (cesd (code Swap)
+                         (env 0)
+                         (stack 1)
+                         (dumps (dump (code Ret)
+                                      (env)
+                                      (stack))
+                                (dump (code (Op *))
+                                      (env 5 6)
+                                      (stack 3 4))))))
+    (test--> secd-rr
+             (term (cesd (code (Sel (code Swap)
+                                    (code App))
+                               Ret)
+                         (env 0)
+                         (stack 1 1)
+                         (dumps (dump (code (Op *))
+                                      (env 5 6)
+                                      (stack 3 4)))))
+             (term (cesd (code App)
+                         (env 0)
+                         (stack 1)
+                         (dumps (dump (code Ret)
+                                      (env)
+                                      (stack))
+                                (dump (code (Op *))
+                                      (env 5 6)
+                                      (stack 3 4))))))
+    
     (test-results))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; METAFUNCTIONS
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (define-metafunction cesd-lang
+    [(APPLY O N_1 N_2) ,(cond [(equal? (term +) (term O))
+                               (+ (term N_1)
+                                  (term N_2))]
+                              [(equal? (term -) (term O))
+                               (- (term N_1)
+                                  (term N_2))]
+                              [(equal? (term *) (term O))
+                               (* (term N_1)
+                                  (term N_2))]
+                              [(equal? (term /) (term O))
+                               (/ (term N_1)
+                                  (term N_2))])])
+  
+  (define (apply-test-suite)
+    (test-equal (term (APPLY + 1 2))
+                (term 3))
+    (test-equal (term (APPLY - 3 2))
+                (term 1))
+    (test-equal (term (APPLY * 3 4))
+                (term 12))
+    (test-equal (term (APPLY / 16 2))
+                (term 8))
+    (test-results))
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; MISC
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (define (test)
     (secd-lang-test-suite)
