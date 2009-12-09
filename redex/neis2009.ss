@@ -458,6 +458,19 @@
                           (env)
                           (stack 2)
                           (dumps))))
+    (test-->> secd-rr 
+              (term (cesd (code (PushC (code (PushV 0)
+                                             (PushN 1)
+                                             (Op -)))
+                                (PushN 3)
+                                App)
+                          (env)
+                          (stack)
+                          (dumps)))
+              (term (cesd (code)
+                          (env 3)
+                          (stack 2)
+                          (dumps))))
     
     (test-results))
   
