@@ -58,7 +58,8 @@
                 (term (cesd (code)
                             (env)
                             (stack (CL (env 1) (code)))
-                            (dumps)))))
+                            (dumps))))
+    (test-results))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; TRACES
@@ -70,15 +71,6 @@
                               (PushN 2)
                               (Op *))
                         (env)
-                        (stack)
-                        (dumps)))))
-  
-  (define (t2)
-    (traces secd-rr
-            (term (cesd (code (PushC (code (PushV 3)
-                                           (pushV 2)
-                                           (Op -))))
-                        (env 1 2)
                         (stack)
                         (dumps)))))
   
@@ -254,7 +246,12 @@
                 (stack 0 V ...)
                 D)
           (side-condition (not (equal? (term V_1)
-                                       (term V_2)))))))
+                                       (term V_2)))))
+     (--> (cesd (code)
+                E
+                (stack V)
+                D)
+          V)))
   
   (define (secd-rr-test-suite)
     (test--> secd-rr
@@ -454,10 +451,7 @@
                           (env)
                           (stack)
                           (dumps)))
-              (term (cesd (code)
-                          (env)
-                          (stack 2)
-                          (dumps))))
+              (term 2))
     (test-->> secd-rr 
               (term (cesd (code (PushC (code (PushV 0)
                                              (PushN 1)
@@ -467,10 +461,7 @@
                           (env)
                           (stack)
                           (dumps)))
-              (term (cesd (code)
-                          (env 3)
-                          (stack 2)
-                          (dumps))))
+              (term 2))
     
     (test-results))
   
